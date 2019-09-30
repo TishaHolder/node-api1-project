@@ -45,7 +45,36 @@ server.get('/users/:id', (res, req) => {
 
     })
     .catch(error => {
-        res.status(500).json({message: 'The user with the specified ID does not exist'});
+        res.status(500).json({message: 'The user with the specified ID does not exist.'});
     })
 
 });
+
+//creates a user using the information sent inside the request body.
+server.post('/users', (res, req) => {
+
+    const dbInformation = req.body;
+
+    
+
+    DB.insert(dbInformation)
+    
+    .then(db => {
+        if(dbInformation.name === "" || dbInformation.bio === ""){
+
+            res.status(400).json({message: 'Please provide name and bio for the user.'});
+    
+        }
+        else {
+
+            res.status(201).json(db);
+        }
+    })
+    .catch(error => {
+        res.status(500).json({message: 'There was an error while saving the user to the database.'});
+    })
+
+});
+
+const port = 5000;
+server.listen(port, () => console.log(`API running on port ${port}`));
