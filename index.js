@@ -48,36 +48,50 @@ server.get('/users/:id', (req, res) => {
 
     //findById() expects an id as it's only parameter and returns the user corresponding to the id provided
     DB.findById(userId)
-    .then(users => {
-        res.status(200).json(users);
+    .then(user => {
+        //if the user with the specified id does not exist return the specified message
+        if(!user){
+
+            res.status(404).json({message: 'The user with the specified ID does not exist.'})
+        }
+        else {
+            //if the user exists return a success message and the user with the specified id
+            res.status(200).json(user);
+
+        }       
 
     })
     .catch(error => {
-        res.status(500).json({message: 'The user with the specified ID does not exist.'});
+        res.status(500).json({message: 'The user information could not be retrieved.'});
     })
 
 });
 
 //creates a user using the information sent inside the request body.
 server.post('/users', (req, res) => {
-
+    
     const userInformation = req.body;    
 
-    DB.insert(dbInformation)    
-    .then(users => {
-        if(userInformation.name === "" || userInformation.bio === ""){
+    if(userInformation.name === "" || userInformation.bio === ""){
 
-            res.status(400).json({message: 'Please provide name and bio for the user.'});    
-        }
-        else {
+        res.status(400).json({message: 'Please provide name and bio for the user.'});    
+    }
+    else {
+        DB.insert(userInformation)    
+        .then(userIdObject => {//insert returns an object with the inserted user id
+                 
+        DB.findById(userIdObject.id)//pass the id of the user id object to findById to find the associated user information
+            .then(user => {
+                res.status(201).json(user); //returns the user "document" to the user
+            })            
+        
+        })
+        .catch(error => {
 
-            res.status(201).json(dbInformation);
-        }
-    })
-    .catch(error => {
+            res.status(500).json({message: 'There was an error while saving the user to the database.'});
+        })
 
-        res.status(500).json({message: 'There was an error while saving the user to the database.'});
-    })
+    }
 
 });
 
@@ -88,7 +102,7 @@ server.delete('/users/:id', (req, res) => {
 
     DB.remove(userId)
     .then(users => {
-        if(userId) {
+        if(users) {
             res.status(200).json(users);
         }
         else {
@@ -108,27 +122,38 @@ server.put('/users/:id', (req, res) => {
 
     const userId = req.params.id;
     const userInformation = req.body;
+
+    if (userInformation.name === "" && userInformation.bio === "") {
     
-    if(!userId){
-
-        res.status(404).json({message: 'The user with the specified ID does not exist.'})
-    }
-    if (userInformation.name === "" || userInformation.bio === "") {
-
         res.status(400).json({message: 'Please provide name and bio for the user.'});
 
     }
     else {
         DB.update(userId, userInformation)
-        .then(users => {
+        .then(user => {
 
-            res.status(200).json({users});
+            if(!user){
+
+                res.status(404).json({message: 'The user with the specified ID does not exist.'})
+            }        
+            else {
+
+                DB.findById(userId)
+                .then (user => {
+
+                    res.status(200).json({user});
+
+                })           
+                
+            }
+
 
         })
         .catch (error => {
-
+        
             res.status(500).json({message: 'The user information could not be modified'});
         })
+
     }
 
 });
