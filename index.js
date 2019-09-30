@@ -61,11 +61,11 @@ server.get('/users/:id', (req, res) => {
 //creates a user using the information sent inside the request body.
 server.post('/users', (req, res) => {
 
-    const dbInformation = req.body;    
+    const userInformation = req.body;    
 
     DB.insert(dbInformation)    
     .then(users => {
-        if(dbInformation.name === "" || dbInformation.bio === ""){
+        if(userInformation.name === "" || userInformation.bio === ""){
 
             res.status(400).json({message: 'Please provide name and bio for the user.'});    
         }
@@ -81,6 +81,7 @@ server.post('/users', (req, res) => {
 
 });
 
+//Removes the user with the specified id and returns the deleted user.
 server.delete('/users/:id', (req, res) => {
 
     const userId = req.params.id;
@@ -99,6 +100,36 @@ server.delete('/users/:id', (req, res) => {
     .catch(error => {
         res.status(500).json({message: 'The user could not be removed.'});
     })
+
+});
+
+//Updates the user with the specified id using data from the request body. Returns the modified document, NOT the original.
+server.put('/users/:id', (req, res) => {
+
+    const userId = req.params.id;
+    const userInformation = req.body;
+    
+    if(!userId){
+
+        res.status(404).json({message: 'The user with the specified ID does not exist.'})
+    }
+    if (userInformation.name === "" || userInformation.bio === "") {
+
+        res.status(400).json({message: 'Please provide name and bio for the user.'});
+
+    }
+    else {
+        DB.update(userId, userInformation)
+        .then(users => {
+
+            res.status(200).json({users});
+
+        })
+        .catch (error => {
+
+            res.status(500).json({message: 'The user information could not be modified'});
+        })
+    }
 
 });
 
